@@ -1,0 +1,111 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    // Looks up the caller's own user doc to check role == 'admin'.
+    // get() reads are not themselves subject to further rule evaluation,
+    // so this cannot be used to recursively bypass rules.
+    function isAdmin() {
+      return isSignedIn() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    function onlyAffects(keys) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys);
+    }
+
+    // ID verification is a real access gate, not just a profile badge:
+    // unverified users can't post requests or see other users' requests
+    // (which is also where a requester's contactNumber lives — Firestore
+    // rules can't redact individual fields on a read, only allow/deny the
+    // whole document, so gating read access to the document is how the
+    // contact number stays hidden from unverified users).
+    function isVerifiedUser() {
+      return isSignedIn() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isVerified == true;
+    }
+
+    // ---- users/{uid} ----
+    match /users/{uid} {
+      allow get: if isOwner(uid) || isAdmin();
+      allow list: if isAdmin();
+
+      // Self-registration: role/isVerified/isSuspended must start at safe
+      // defaults — admin accounts are never created through client signup.
+      allow create: if isOwner(uid)
+        && request.resource.data.role == 'user'
+        && request.resource.data.isVerified == false
+        && request.resource.data.isSuspended == false;
+
+      // Admins may change anything (verify/suspend/role/etc). Regular users
+      // may only ever touch their own profile fields — never role,
+      // isVerified, isSuspended, or email.
+      allow update: if isAdmin()
+        || (isOwner(uid) && onlyAffects([
+              'fullName', 'phone', 'gender', 'bloodType', 'city', 'dob',
+              'idCardUrl', 'profilePhotoUrl', 'profileComplete',
+              'fcmToken', 'expoPushToken'
+            ]));
+
+      // A signed-in user can delete their own profile doc (self-service
+      // account deletion — the client also deletes their own Firebase Auth
+      // account directly afterward, which doesn't need the Admin SDK the
+      // way deleting *someone else's* account does). Admins deleting
+      // *other* users still goes through the deleteUserAccount Cloud
+      // Function, which bypasses these rules entirely.
+      allow delete: if isOwner(uid);
+    }
+
+    // ---- bloodRequests/{requestId} ----
+    match /bloodRequests/{requestId} {
+      // Own requests are always readable regardless of verification status
+      // (so a pending user can still see "My Requests" once they're let
+      // back in). Everyone else must be verified — this is what actually
+      // hides other users' contactNumber from unverified accounts.
+      allow read: if isAdmin() || isOwner(resource.data.requesterUid) || isVerifiedUser();
+
+      allow create: if isVerifiedUser()
+        && request.resource.data.requesterUid == request.auth.uid
+        && request.resource.data.status == 'pending';
+
+      // Admins can change/delete anything. The requester can update/cancel
+      // their own request. Any other *verified* user may only bump
+      // viewCount / respondedUids — this is what lets a matched donor
+      // register a "viewed" / "responded" without granting them broader
+      // write access to someone else's request.
+      allow update: if isAdmin()
+        || (isOwner(resource.data.requesterUid))
+        || (isVerifiedUser() && onlyAffects(['viewCount', 'respondedUids']));
+
+      allow delete: if isAdmin() || isOwner(resource.data.requesterUid);
+    }
+
+    // ---- donationHistory/{id} ----
+    match /donationHistory/{id} {
+      allow read: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow write: if isAdmin();
+    }
+
+    // ---- notifications/{uid}/items/{itemId} ----
+    match /notifications/{uid}/items/{itemId} {
+      allow read: if isOwner(uid) || isAdmin();
+      // Owners may only flip isRead; creation happens server-side (Cloud
+      // Functions via the Admin SDK, which bypasses these rules).
+      allow update: if isOwner(uid) && onlyAffects(['isRead']);
+      // Owners can also delete their own notification items — this is
+      // exercised during self-service account deletion, and is otherwise
+      // reasonable to allow generally (clearing your own inbox).
+      allow create: if isAdmin();
+      allow delete: if isOwner(uid) || isAdmin();
+    }
+  }
+}

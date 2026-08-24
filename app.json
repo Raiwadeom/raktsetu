@@ -1,0 +1,64 @@
+{
+  "expo": {
+    "name": "Rakt Setu",
+    "slug": "raktsetu",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "icon": "./assets/app_icon.png",
+    "backgroundColor": "#B71C1C",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.raktsetu.app",
+      "infoPlist": {
+        "UIBackgroundModes": [
+          "remote-notification"
+        ]
+      }
+    },
+    "android": {
+      "package": "com.raktsetu.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/app_icon.png",
+        "backgroundColor": "#FFFFFF"
+      },
+      "permissions": [
+        "NOTIFICATIONS"
+      ]
+    },
+    "web": {
+      "bundler": "metro"
+    },
+    "notification": {
+      "icon": "./assets/app_icon.png",
+      "color": "#B71C1C"
+    },
+    "plugins": [
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash_logo.png",
+          "imageWidth": 160,
+          "resizeMode": "contain",
+          "backgroundColor": "#B71C1C"
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/app_icon.png",
+          "color": "#B71C1C"
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "45aaac52-3ccb-4cf4-b474-7b4c880b7f96"
+      }
+    },
+    "owner": "omiiitech"
+  }
+}
