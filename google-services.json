@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "799125597564",
+    "project_id": "raktsetu-14b03",
+    "storage_bucket": "raktsetu-14b03.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:799125597564:android:1a3bfadda5b5f320c048f9",
+        "android_client_info": {
+          "package_name": "com.raktsetu.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "799125597564-p7kc4l2ro8ugdp2rk68hcvfos2tguprg.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAPf2HQN3hQA-fo55FyNyBimDY8KhFzJag"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "799125597564-p7kc4l2ro8ugdp2rk68hcvfos2tguprg.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

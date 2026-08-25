@@ -21,6 +21,7 @@
     },
     "android": {
       "package": "com.raktsetu.app",
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/app_icon.png",
         "backgroundColor": "#FFFFFF"
