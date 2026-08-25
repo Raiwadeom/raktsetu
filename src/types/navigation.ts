@@ -19,7 +19,6 @@ export type RootStackParamList = {
   AdminUserDetail: { uid: string };
   AdminRequests: undefined;
   AdminDonationForm: { preselectedUserId?: string } | undefined;
-  AdminBroadcast: undefined;
 };
 
 export type HomeStackParamList = {

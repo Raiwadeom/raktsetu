@@ -23,7 +23,6 @@ import AdminUsersScreen from '../screens/admin/AdminUsersScreen';
 import AdminUserDetailScreen from '../screens/admin/AdminUserDetailScreen';
 import AdminRequestsScreen from '../screens/admin/AdminRequestsScreen';
 import AdminDonationFormScreen from '../screens/admin/AdminDonationFormScreen';
-import AdminBroadcastScreen from '../screens/admin/AdminBroadcastScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const headerOptions = {
@@ -83,7 +82,6 @@ export default function RootNavigator() {
             <Stack.Screen name="AdminUserDetail" component={AdminUserDetailScreen} options={{ title: 'User Details' }} />
             <Stack.Screen name="AdminRequests" component={AdminRequestsScreen} options={{ title: 'Blood Requests' }} />
             <Stack.Screen name="AdminDonationForm" component={AdminDonationFormScreen} options={{ title: 'Add Donation Record' }} />
-            <Stack.Screen name="AdminBroadcast" component={AdminBroadcastScreen} options={{ title: 'Broadcast Announcement' }} />
           </Stack.Group>
         ) : needsProfileCompletion ? (
           <Stack.Group navigationKey="onboarding">

@@ -14,6 +14,12 @@ export const FS = {
   donationHistory: 'donationHistory',
   notifications: 'notifications',
   notificationItems: 'items',
+  // Minimal-exposure mirror of {bloodType, expoPushToken, isSuspended} —
+  // readable by any verified user so the client can find matching donors
+  // and push to them directly (no Cloud Functions / Blaze plan required).
+  // Deliberately excludes phone/email/fullName/city, unlike the full users
+  // collection, to limit what's exposed by this readable-by-everyone rule.
+  pushTokens: 'pushTokens',
 } as const;
 
 export const RequestStatus = {

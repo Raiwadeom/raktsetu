@@ -2,6 +2,7 @@ import {
   doc,
   getDoc,
   updateDoc,
+  setDoc,
   onSnapshot,
   collection,
   query,
@@ -55,10 +56,27 @@ export async function saveProfile(uid: string, fields: Record<string, unknown>):
   // object against the real AppUser shape, so the escape hatch is safe here.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await updateDoc(doc(db, FS.users, uid), fields as any);
+
+  // Keep the pushTokens/{uid} mirror (see appConstants.ts FS.pushTokens) in
+  // sync whenever bloodType changes, so client-side donor matching queries
+  // against the current blood type.
+  if ('bloodType' in fields) {
+    await setDoc(doc(db, FS.pushTokens, uid), { bloodType: fields.bloodType }, { merge: true });
+  }
 }
 
-export async function saveExpoPushToken(uid: string, token: string): Promise<void> {
+export async function saveExpoPushToken(
+  uid: string,
+  token: string,
+  bloodType: string,
+  isSuspended: boolean,
+): Promise<void> {
   await updateDoc(doc(db, FS.users, uid), { expoPushToken: token });
+  await setDoc(
+    doc(db, FS.pushTokens, uid),
+    { expoPushToken: token, bloodType, isSuspended },
+    { merge: true },
+  );
 }
 
 // ---- Admin operations ----
@@ -84,4 +102,5 @@ export async function setVerified(uid: string, verified: boolean): Promise<void>
 
 export async function setSuspended(uid: string, suspended: boolean): Promise<void> {
   await updateDoc(doc(db, FS.users, uid), { isSuspended: suspended });
+  await setDoc(doc(db, FS.pushTokens, uid), { isSuspended: suspended }, { merge: true });
 }

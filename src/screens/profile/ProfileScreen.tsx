@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Alert, Image, ScrollView, StyleSheet, View } from 'react-native';
+import { Image, ScrollView, StyleSheet, View } from 'react-native';
 import Text from '../../components/Text';
 import { Colors } from '../../constants/theme';
 import { DonationType } from '../../constants/appConstants';
 import { formatDate } from '../../utils/formatters';
+import { confirmAsync } from '../../utils/confirmDialog';
 import { useAuth } from '../../context/AuthContext';
 import { watchForUser } from '../../services/donationHistoryService';
 import BloodTypeBadge from '../../components/BloodTypeBadge';
@@ -26,11 +27,9 @@ export default function ProfileScreen({ navigation }: ProfileStackScreenProps<'P
 
   if (!appUser) return <LoadingIndicator />;
 
-  const confirmSignOut = () => {
-    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Sign Out', style: 'destructive', onPress: signOut },
-    ]);
+  const confirmSignOut = async () => {
+    const ok = await confirmAsync('Sign Out', 'Are you sure you want to sign out?', 'Sign Out');
+    if (ok) signOut();
   };
 
   return (

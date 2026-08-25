@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Alert, FlatList, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { FlatList, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Text from '../../components/Text';
 import { Colors } from '../../constants/theme';
 import { RequestStatus } from '../../constants/appConstants';
 import { timeAgo } from '../../utils/formatters';
+import { confirmAsync } from '../../utils/confirmDialog';
 import { deleteRequest, updateStatus, watchAllRequests } from '../../services/bloodRequestService';
 import BloodTypeBadge from '../../components/BloodTypeBadge';
 import StatusChip from '../../components/StatusChip';
@@ -20,11 +21,13 @@ export default function AdminRequestsScreen() {
 
   const filtered = filter ? requests.filter((r) => r.status === filter) : requests;
 
-  const confirmDelete = (id: string) => {
-    Alert.alert('Delete Request', 'Delete this blood request permanently? This is meant for spam or fake requests.', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: () => deleteRequest(id) },
-    ]);
+  const confirmDelete = async (id: string) => {
+    const ok = await confirmAsync(
+      'Delete Request',
+      'Delete this blood request permanently? This is meant for spam or fake requests.',
+      'Delete',
+    );
+    if (ok) deleteRequest(id);
   };
 
   return (

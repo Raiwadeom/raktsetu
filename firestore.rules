@@ -89,6 +89,30 @@ service cloud.firestore {
       allow delete: if isAdmin() || isOwner(resource.data.requesterUid);
     }
 
+    // ---- pushTokens/{uid} ----
+    // Minimal-exposure mirror of {bloodType, expoPushToken, isSuspended},
+    // deliberately excluding phone/email/fullName/city. Readable by any
+    // verified user so the client can find matching donors and push to them
+    // directly, with no server-side Cloud Function (no Blaze plan needed).
+    // This is a deliberate, accepted tradeoff: any verified user can read
+    // any other verified user's push token, and — because Expo's push-send
+    // endpoint doesn't check who's calling it — a token, once read, can be
+    // used to send arbitrary notification content to that device. Firestore
+    // rules can gate what's readable here; they cannot prevent that misuse
+    // once read. See README for the fuller writeup of this tradeoff.
+    match /pushTokens/{uid} {
+      allow get, list: if isVerifiedUser();
+
+      allow create: if isAdmin()
+        || (isOwner(uid) && request.resource.data.keys().hasOnly(['bloodType', 'expoPushToken', 'isSuspended']));
+
+      // Admin may change anything (used to mirror isSuspended). The owner
+      // may only ever update bloodType/expoPushToken — not isSuspended,
+      // which only an admin toggling suspension should be able to flip.
+      allow update: if isAdmin()
+        || (isOwner(uid) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['bloodType', 'expoPushToken']));
+    }
+
     // ---- donationHistory/{id} ----
     match /donationHistory/{id} {
       allow read: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
@@ -98,13 +122,22 @@ service cloud.firestore {
     // ---- notifications/{uid}/items/{itemId} ----
     match /notifications/{uid}/items/{itemId} {
       allow read: if isOwner(uid) || isAdmin();
-      // Owners may only flip isRead; creation happens server-side (Cloud
-      // Functions via the Admin SDK, which bypasses these rules).
+      // Owners may only flip isRead.
       allow update: if isOwner(uid) && onlyAffects(['isRead']);
+      // Admin can write anything. Any verified user can write a bloodMatch
+      // notification into someone else's inbox — this is the client-side
+      // donor-matching flow (see pushTokens/{uid} above): the requester's
+      // own device does the matching and writes these directly, since no
+      // Cloud Function is deployed. The shape is locked to bloodMatch only
+      // so this can't be used to forge an 'announcement' or other type.
+      allow create: if isAdmin()
+        || (isVerifiedUser()
+              && request.resource.data.type == 'bloodMatch'
+              && request.resource.data.isRead == false
+              && request.resource.data.keys().hasOnly(['title', 'body', 'type', 'relatedRequestId', 'isRead', 'createdAt']));
       // Owners can also delete their own notification items — this is
       // exercised during self-service account deletion, and is otherwise
       // reasonable to allow generally (clearing your own inbox).
-      allow create: if isAdmin();
       allow delete: if isOwner(uid) || isAdmin();
     }
   }

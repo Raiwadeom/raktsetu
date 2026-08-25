@@ -19,6 +19,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { FS, RequestStatus } from '../constants/appConstants';
+import { notifyMatchingDonors } from './donorNotificationService';
 import type { BloodRequest, NewBloodRequestInput, RequestStatusValue } from '../types/models';
 
 function requestFromDoc(docSnap: QueryDocumentSnapshot<DocumentData>): BloodRequest {
@@ -41,10 +42,14 @@ function requestFromDoc(docSnap: QueryDocumentSnapshot<DocumentData>): BloodRequ
 }
 
 /**
- * Creates the request document. The shared onBloodRequestCreated Cloud
- * Function picks this up automatically, finds matching donors, and writes
- * their in-app notifications + an Expo push notification — no client-side
- * matching code needed here.
+ * Creates the request document, then finds matching donors and pushes to
+ * them directly from this device (see donorNotificationService.ts) — this
+ * project runs on the free Spark plan, so there's no server-side Cloud
+ * Function doing this instead.
+ *
+ * A notification failure is swallowed, not thrown: the request itself has
+ * already saved successfully by that point, and the caller shouldn't treat
+ * "posting a request" as failed just because the push step hit a problem.
  */
 export async function createRequest(request: NewBloodRequestInput): Promise<string> {
   const docRef = await addDoc(collection(db, FS.bloodRequests), {
@@ -61,6 +66,19 @@ export async function createRequest(request: NewBloodRequestInput): Promise<stri
     respondedUids: [],
     createdAt: serverTimestamp(),
   });
+
+  try {
+    await notifyMatchingDonors({
+      requestId: docRef.id,
+      requesterUid: request.requesterUid,
+      bloodType: request.bloodType,
+      hospitalName: request.hospitalName,
+      unitsRequired: request.unitsRequired,
+    });
+  } catch (e) {
+    console.warn('Failed to notify matching donors:', e);
+  }
+
   return docRef.id;
 }
 

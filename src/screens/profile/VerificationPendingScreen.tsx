@@ -1,8 +1,9 @@
 import React from 'react';
-import { Alert, Image, ScrollView, StyleSheet, View } from 'react-native';
+import { Image, ScrollView, StyleSheet, View } from 'react-native';
 import Text from '../../components/Text';
 import { Colors } from '../../constants/theme';
 import { formatDate } from '../../utils/formatters';
+import { confirmAsync } from '../../utils/confirmDialog';
 import { useAuth } from '../../context/AuthContext';
 import BloodTypeBadge from '../../components/BloodTypeBadge';
 import PrimaryButton from '../../components/PrimaryButton';
@@ -14,11 +15,9 @@ export default function VerificationPendingScreen({ navigation }: RootScreenProp
 
   if (!appUser) return <LoadingIndicator />;
 
-  const confirmSignOut = () => {
-    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Sign Out', style: 'destructive', onPress: signOut },
-    ]);
+  const confirmSignOut = async () => {
+    const ok = await confirmAsync('Sign Out', 'Are you sure you want to sign out?', 'Sign Out');
+    if (ok) signOut();
   };
 
   return (

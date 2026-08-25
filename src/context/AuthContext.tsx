@@ -85,7 +85,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     registerForPushNotificationsAsync()
       .then((token) => {
         if (token && token !== appUser.expoPushToken) {
-          saveExpoPushToken(appUser.uid, token).catch((e) => console.warn('Failed to save push token:', e));
+          saveExpoPushToken(appUser.uid, token, appUser.bloodType, appUser.isSuspended).catch((e) =>
+            console.warn('Failed to save push token:', e),
+          );
         }
       })
       .catch((e) => console.warn('Push registration failed:', e));

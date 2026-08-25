@@ -76,10 +76,9 @@ export default function AdminDashboardScreen({ navigation }: RootScreenProps<'Ad
         ))}
       </View>
 
-      <MenuTile icon="👥" color={Palette.blue} title="User Management" subtitle="View, verify, suspend or delete accounts" onPress={() => navigation.navigate('AdminUsers')} />
+      <MenuTile icon="👥" color={Palette.blue} title="User Management" subtitle="View, verify or suspend accounts" onPress={() => navigation.navigate('AdminUsers')} />
       <MenuTile icon="🩸" color={Colors.primary} title="Blood Request Management" subtitle="Review, fulfill, cancel or remove requests" onPress={() => navigation.navigate('AdminRequests')} />
       <MenuTile icon="📝" color={Palette.teal} title="Add Donation Record" subtitle="Log a donation or receipt against a user" onPress={() => navigation.navigate('AdminDonationForm')} />
-      <MenuTile icon="📢" color={Palette.amber} title="Broadcast Announcement" subtitle="Notify all users or a specific blood type" onPress={() => navigation.navigate('AdminBroadcast')} />
       <MenuTile icon="📤" color={Palette.purple} title="Export Users to Excel" subtitle="Share a .xlsx of all registered users" onPress={exportUsers} loading={exporting} />
 
       <Pressable style={styles.signOutBtn} onPress={signOut}>

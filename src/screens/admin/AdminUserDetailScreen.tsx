@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Alert, Image, ScrollView, StyleSheet, View } from 'react-native';
+import { Image, ScrollView, StyleSheet, View } from 'react-native';
 import Text from '../../components/Text';
 import { Colors } from '../../constants/theme';
 import { formatDate } from '../../utils/formatters';
 import { watchUser, setVerified, setSuspended } from '../../services/userService';
-import { deleteUserAccount } from '../../services/adminService';
 import BloodTypeBadge from '../../components/BloodTypeBadge';
 import VerifiedBadge from '../../components/VerifiedBadge';
 import PrimaryButton from '../../components/PrimaryButton';
@@ -32,29 +31,6 @@ export default function AdminUserDetailScreen({ route, navigation }: RootScreenP
     setBusy(true);
     try { await setSuspended(uid, !user.isSuspended); } finally { setBusy(false); }
   };
-  const confirmDelete = () => {
-    Alert.alert(
-      'Delete Account',
-      `This will permanently delete ${user.fullName || user.email}'s account, profile, and login access. This cannot be undone.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete', style: 'destructive', onPress: async () => {
-            setBusy(true);
-            try {
-              await deleteUserAccount(uid);
-              navigation.goBack();
-            } catch (e) {
-              Alert.alert('Failed', (e as Error).message || 'Failed to delete account.');
-            } finally {
-              setBusy(false);
-            }
-          },
-        },
-      ],
-    );
-  };
-
   const isPdf = user.idCardUrl && user.idCardUrl.toLowerCase().includes('.pdf');
 
   return (
@@ -118,13 +94,6 @@ export default function AdminUserDetailScreen({ route, navigation }: RootScreenP
           outlined
           onPress={() => navigation.navigate('AdminDonationForm', { preselectedUserId: uid })}
           style={{ flexBasis: '100%' }}
-        />
-        <PrimaryButton
-          label="Delete Account"
-          outlined
-          onPress={confirmDelete}
-          loading={busy}
-          style={{ borderColor: Colors.danger, flexBasis: '100%' }}
         />
       </View>
     </ScrollView>
