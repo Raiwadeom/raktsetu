@@ -1,6 +1,6 @@
 import { collection, doc, getDocs, query, where, writeBatch, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
-import { FS, NotificationType } from '../constants/appConstants';
+import { COMPATIBLE_DONOR_TYPES, FS, NotificationType } from '../constants/appConstants';
 
 interface NotifyMatchingDonorsParams {
   requestId: string;
@@ -13,10 +13,15 @@ interface NotifyMatchingDonorsParams {
 /**
  * Client-side replacement for the (unused, since this project runs on the
  * free Spark plan — see README) onBloodRequestCreated Cloud Function: finds
- * verified, non-suspended donors of a matching blood type via the
- * pushTokens/{uid} mirror (see appConstants.ts FS.pushTokens and
- * firestore.rules), writes each an in-app notification, and pushes an Expo
- * notification straight from this device — no server component involved.
+ * verified, non-suspended donors who can actually give to the requested
+ * blood type via the pushTokens/{uid} mirror (see appConstants.ts
+ * FS.pushTokens and firestore.rules), writes each an in-app notification,
+ * and pushes an Expo notification straight from this device — no server
+ * component involved.
+ *
+ * Matching is on red-cell compatibility (COMPATIBLE_DONOR_TYPES), not on an
+ * exact blood-type equality: a request for A+ must reach O-, O+ and A-
+ * donors too, and matching exactly would have excluded them.
  *
  * Runs on the *requester's* device right after they post a request. If it
  * throws, the caller (createRequest) swallows the error — the request
@@ -26,9 +31,13 @@ interface NotifyMatchingDonorsParams {
 export async function notifyMatchingDonors(params: NotifyMatchingDonorsParams): Promise<void> {
   const { requestId, requesterUid, bloodType, hospitalName, unitsRequired } = params;
 
+  // Fall back to an exact match if the stored type is somehow off-list, so
+  // bad data narrows the audience rather than throwing on an empty 'in'.
+  const donorTypes = COMPATIBLE_DONOR_TYPES[bloodType] ?? [bloodType];
+
   const q = query(
     collection(db, FS.pushTokens),
-    where('bloodType', '==', bloodType),
+    where('bloodType', 'in', donorTypes as string[]),
     where('isSuspended', '==', false),
   );
   const snap = await getDocs(q);
@@ -40,7 +49,9 @@ export async function notifyMatchingDonors(params: NotifyMatchingDonorsParams): 
   if (donors.length === 0) return;
 
   const title = '🩸 Blood needed urgently';
-  const body = `${bloodType} blood needed at ${hospitalName} — ${unitsRequired} unit(s). Tap to view.`;
+  // Phrased to hold for every recipient of this batch — most no longer share
+  // the requested type exactly, they're just compatible with it.
+  const body = `${bloodType} blood needed at ${hospitalName} — ${unitsRequired} unit(s). You're a compatible donor. Tap to view.`;
 
   // In-app notification docs, batched (Firestore's 500-write batch limit).
   const batchSize = 400;

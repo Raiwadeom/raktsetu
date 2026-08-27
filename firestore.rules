@@ -107,10 +107,28 @@ service cloud.firestore {
         || (isOwner(uid) && request.resource.data.keys().hasOnly(['bloodType', 'expoPushToken', 'isSuspended']));
 
       // Admin may change anything (used to mirror isSuspended). The owner
-      // may only ever update bloodType/expoPushToken — not isSuspended,
-      // which only an admin toggling suspension should be able to flip.
+      // may update bloodType/expoPushToken freely, and may write isSuspended
+      // only to the value already on their own users/{uid} doc.
+      //
+      // That last clause exists so a mirror created without isSuspended can
+      // be healed (syncPushTokenMirror): donor matching filters on
+      // isSuspended == false, and Firestore drops documents missing the
+      // field from that query entirely, so a partial mirror silently makes
+      // its owner unreachable. Pinning the written value to the users doc
+      // keeps the original guarantee intact — a suspended user still cannot
+      // un-suspend themselves here, because only an admin can flip the
+      // users/{uid} value this is checked against.
       allow update: if isAdmin()
-        || (isOwner(uid) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['bloodType', 'expoPushToken']));
+        || (isOwner(uid)
+              && request.resource.data.diff(resource.data).affectedKeys()
+                   .hasOnly(['bloodType', 'expoPushToken', 'isSuspended'])
+              && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['isSuspended'])
+                    || request.resource.data.isSuspended ==
+                       get(/databases/$(database)/documents/users/$(uid)).data.isSuspended));
+
+      // Self-service account deletion removes this alongside users/{uid};
+      // without it the deleted account stays matchable forever.
+      allow delete: if isOwner(uid) || isAdmin();
     }
 
     // ---- donationHistory/{id} ----

@@ -12,6 +12,7 @@ import {
 import { doc, deleteDoc, getDoc, setDoc, serverTimestamp, collection, getDocs, writeBatch } from 'firebase/firestore';
 import { auth, db } from '../firebase/config';
 import { FS } from '../constants/appConstants';
+import { deletePushTokenMirror } from './userService';
 
 export class AuthError extends Error {}
 
@@ -159,6 +160,12 @@ export async function deleteOwnAccount(password: string): Promise<void> {
   } catch {
     // Non-fatal — still proceed with deleting the profile doc and account.
   }
+
+  // The donor-matching mirror is a separate top-level doc, so deleting
+  // users/{uid} does not remove it. Left behind it keeps the deleted account
+  // matchable: every later request would write notifications into a dead
+  // inbox and push to a stale token.
+  await deletePushTokenMirror(uid).catch(() => undefined);
 
   await deleteDoc(doc(db, FS.users, uid)).catch(() => undefined);
 

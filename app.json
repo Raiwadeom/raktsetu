@@ -2,7 +2,7 @@
   "expo": {
     "name": "Rakt Setu",
     "slug": "raktsetu",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "icon": "./assets/app_icon.png",
@@ -20,7 +20,7 @@
       }
     },
     "android": {
-      "package": "com.raktsetu.app",
+      "package": "com.raktsetusmu.app",
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/app_icon.png",
@@ -28,7 +28,8 @@
       },
       "permissions": [
         "NOTIFICATIONS"
-      ]
+      ],
+      "versionCode": 3
     },
     "web": {
       "bundler": "metro"

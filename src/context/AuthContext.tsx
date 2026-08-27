@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { onAuthStateChanged, type User as FirebaseUser } from 'firebase/auth';
 import { auth } from '../firebase/config';
-import { watchUser, saveExpoPushToken, getUser } from '../services/userService';
+import { watchUser, saveExpoPushToken, syncPushTokenMirror, getUser } from '../services/userService';
 import * as authService from '../services/authService';
 import { registerForPushNotificationsAsync } from '../services/pushNotificationService';
 import type { AppUser } from '../types/models';
@@ -76,11 +76,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  // Once we know who's signed in (and their profile doc exists), register
-  // this device for push and save the Expo push token — once per session.
+  // Once we know who's signed in (and their profile doc exists), make sure
+  // they're findable by donor matching, then register this device for push
+  // and save the Expo push token — once per session.
   useEffect(() => {
     if (!appUser || pushRegisteredForUid.current === appUser.uid) return;
     pushRegisteredForUid.current = appUser.uid;
+
+    // Unconditional, and deliberately NOT chained onto push registration:
+    // the pushTokens/{uid} mirror is what makes this user visible to donor
+    // matching at all, including for the purely in-app notification. Gating
+    // it on a push token meant anyone who declined the notification
+    // permission prompt silently received nothing — see syncPushTokenMirror.
+    syncPushTokenMirror(appUser.uid, appUser.bloodType, appUser.isSuspended).catch((e) =>
+      console.warn('Failed to sync donor-matching mirror:', e),
+    );
 
     registerForPushNotificationsAsync()
       .then((token) => {

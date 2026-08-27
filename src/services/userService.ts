@@ -3,6 +3,7 @@ import {
   getDoc,
   updateDoc,
   setDoc,
+  deleteDoc,
   onSnapshot,
   collection,
   query,
@@ -61,8 +62,35 @@ export async function saveProfile(uid: string, fields: Record<string, unknown>):
   // sync whenever bloodType changes, so client-side donor matching queries
   // against the current blood type.
   if ('bloodType' in fields) {
-    await setDoc(doc(db, FS.pushTokens, uid), { bloodType: fields.bloodType }, { merge: true });
+    const snap = await getDoc(doc(db, FS.users, uid));
+    await syncPushTokenMirror(uid, String(fields.bloodType ?? ''), !!snap.data()?.isSuspended);
   }
+}
+
+/**
+ * Writes the {bloodType, isSuspended} half of the pushTokens/{uid} matching
+ * mirror. Deliberately does NOT touch expoPushToken.
+ *
+ * This must run for *every* signed-in user, whether or not they granted
+ * notification permission. Donor matching queries
+ * `where('isSuspended', '==', false)`, and Firestore excludes documents that
+ * are missing the field entirely from such a query — so a mirror doc without
+ * `isSuspended` makes that user invisible to matching and silently costs them
+ * both the push *and* the in-app notification. Previously the only writer of
+ * `isSuspended` was saveExpoPushToken(), which never runs when push
+ * permission is denied, so declining the Android 13+ permission prompt
+ * disabled in-app notifications too.
+ *
+ * Callers pass isSuspended straight from the authoritative users/{uid} doc:
+ * the security rules only accept a value matching that doc, so this can heal
+ * a partially-written mirror without letting anyone un-suspend themselves.
+ */
+export async function syncPushTokenMirror(
+  uid: string,
+  bloodType: string,
+  isSuspended: boolean,
+): Promise<void> {
+  await setDoc(doc(db, FS.pushTokens, uid), { bloodType, isSuspended }, { merge: true });
 }
 
 export async function saveExpoPushToken(
@@ -77,6 +105,12 @@ export async function saveExpoPushToken(
     { expoPushToken: token, bloodType, isSuspended },
     { merge: true },
   );
+}
+
+/** Removes the matching mirror so a deleted account stops being matched,
+ *  written to, and pushed to. Called during self-service account deletion. */
+export async function deletePushTokenMirror(uid: string): Promise<void> {
+  await deleteDoc(doc(db, FS.pushTokens, uid));
 }
 
 // ---- Admin operations ----
