@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Platform, Pressable, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import Text from '../components/Text';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -73,6 +74,11 @@ function ProfileStackNavigator() {
 export default function MainTabs() {
   const { appUser } = useAuth();
   const [unread, setUnread] = useState(0);
+  // Android 15 forces apps edge-to-edge, so the tab bar is drawn *under*
+  // the system navigation bar unless we reserve its height ourselves. The
+  // inset is 0 on full-gesture navigation and ~48dp with 3-button nav, so it
+  // has to be measured rather than hardcoded per platform.
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     if (!appUser) return undefined;
@@ -86,9 +92,9 @@ export default function MainTabs() {
         tabBarActiveTintColor: Colors.primary,
         tabBarInactiveTintColor: Colors.textSecondary,
         tabBarStyle: {
-          height: Platform.OS === 'ios' ? 84 : 64,
+          height: 60 + insets.bottom,
           paddingTop: 6,
-          paddingBottom: Platform.OS === 'ios' ? 26 : 8,
+          paddingBottom: insets.bottom + 8,
           borderTopColor: Colors.divider,
           backgroundColor: Colors.surface,
         },

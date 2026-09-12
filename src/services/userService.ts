@@ -97,16 +97,29 @@ export async function syncPushTokenMirror(
   await setDoc(doc(db, FS.pushTokens, uid), { bloodType, isSuspended }, { merge: true });
 }
 
+/**
+ * Writes this device's Expo push token into users/{uid} and into the
+ * pushTokens/{uid} matching mirror.
+ *
+ * Deliberately does NOT write isSuspended, even though it is available:
+ * every deployed version of the security rules lets an owner update
+ * bloodType/expoPushToken, but the clause permitting them to write
+ * isSuspended only exists in the rules published on 2026-08-27. Against an
+ * older deployed ruleset the whole update is rejected for touching that one
+ * field, the token never reaches the mirror, and the owner gets in-app
+ * notifications but no push - with nothing surfaced anywhere, since the
+ * caller only console.warns. syncPushTokenMirror owns isSuspended; this
+ * owns the token.
+ */
 export async function saveExpoPushToken(
   uid: string,
   token: string,
   bloodType: string,
-  isSuspended: boolean,
 ): Promise<void> {
   await updateDoc(doc(db, FS.users, uid), { expoPushToken: token });
   await setDoc(
     doc(db, FS.pushTokens, uid),
-    { expoPushToken: token, bloodType, isSuspended },
+    { expoPushToken: token, bloodType },
     { merge: true },
   );
 }

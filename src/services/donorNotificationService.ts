@@ -42,15 +42,22 @@ export async function notifyMatchingDonors(params: NotifyMatchingDonorsParams): 
   // bad data narrows the audience rather than throwing on an empty 'in'.
   const donorTypes = COMPATIBLE_DONOR_TYPES[bloodType] ?? [bloodType];
 
+  // Suspension is filtered in memory rather than in the query on purpose.
+  // Firestore drops documents that are MISSING a filtered field from the
+  // result set entirely, so `where('isSuspended','==',false)` silently made
+  // every donor whose mirror lacked the field unreachable - and a mirror
+  // ends up without it whenever the rules reject the write that would have
+  // added it. Absent now reads as not suspended, which is both the truth for
+  // these docs and the safe default: an unsuspended donor being missed in an
+  // emergency is far worse than a suspended one being messaged.
   const q = query(
     collection(db, FS.pushTokens),
     where('bloodType', 'in', donorTypes as string[]),
-    where('isSuspended', '==', false),
   );
   const snap = await getDocs(q);
 
   const donors = snap.docs
-    .filter((d) => d.id !== requesterUid)
+    .filter((d) => d.id !== requesterUid && d.data().isSuspended !== true)
     .map((d) => ({ uid: d.id, expoPushToken: d.data().expoPushToken as string | undefined }));
 
   if (donors.length === 0) return { inAppCount: 0, pushCount: 0 };
@@ -93,6 +100,7 @@ export async function notifyMatchingDonors(params: NotifyMatchingDonorsParams): 
     pushChunks.push(tokens.slice(i, i + 100));
   }
 
+  // Counts tickets Expo actually accepted, not messages we handed it.
   let pushCount = 0;
 
   for (const chunk of pushChunks) {
@@ -115,10 +123,42 @@ export async function notifyMatchingDonors(params: NotifyMatchingDonorsParams): 
         },
         body: JSON.stringify(messages),
       });
-      if (res.ok) {
-        pushCount += chunk.length;
-      } else {
+
+      if (!res.ok) {
         console.warn(`Expo push send failed: HTTP ${res.status}`);
+        continue;
+      }
+
+      // A successful HTTP status does NOT mean the pushes were delivered.
+      // Expo answers 200 and reports per-message outcomes in the body, so
+      // checking res.ok alone treats total failure as success - which is
+      // exactly how a missing FCM V1 service account key on the Expo project
+      // went unnoticed for weeks: every send "succeeded" while every ticket
+      // came back {status: 'error', details: {error: 'InvalidCredentials'}}.
+      const body = (await res.json()) as {
+        data?: { status?: string; message?: string; details?: { error?: string } }[];
+        errors?: { message?: string }[];
+      };
+
+      if (body.errors?.length) {
+        console.warn('Expo push rejected the request:', body.errors.map((e) => e.message).join('; '));
+        continue;
+      }
+
+      const tickets = body.data ?? [];
+      const failed = tickets.filter((t) => t.status === 'error');
+      pushCount += tickets.length - failed.length;
+
+      if (failed.length > 0) {
+        // Grouped, because one bad credential fails every ticket identically
+        // and logging each one buries the single fact that matters.
+        const byReason = new Map<string, number>();
+        for (const t of failed) {
+          const reason = t.details?.error || t.message || 'unknown';
+          byReason.set(reason, (byReason.get(reason) ?? 0) + 1);
+        }
+        const summary = [...byReason].map(([reason, n]) => `${reason} x${n}`).join(', ');
+        console.warn(`Expo push: ${failed.length}/${tickets.length} failed - ${summary}`);
       }
     } catch (e) {
       console.warn('Expo push send failed:', e);
