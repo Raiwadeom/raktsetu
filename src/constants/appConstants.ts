@@ -1,6 +1,8 @@
 export const APP_NAME = 'Rakt Setu';
 export const COLLEGE_NAME = 'Chhatrapati Shivajiraje Mahavidyalaya, Udgir';
-export const COLLEGE_CONTACT = 'raktsetu.csm@gmail.com';
+export const COLLEGE_CONTACT = 'smuiqac@gmail.com';
+export const COLLEGE_PHONE = '9850757663';
+export const BUILT_BY = 'Built by Raiwade Omrushikesh';
 
 export const BLOOD_TYPES = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] as const;
 export const GENDERS = ['Male', 'Female', 'Other'] as const;

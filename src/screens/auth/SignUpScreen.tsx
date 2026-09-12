@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, View } from 'react-native';
 import Text from '../../components/Text';
 import { Colors } from '../../constants/theme';
 import { validateConfirmPassword, validateEmail, validatePassword } from '../../utils/validators';
 import { useAuth } from '../../context/AuthContext';
 import AppTextField from '../../components/AppTextField';
 import PrimaryButton from '../../components/PrimaryButton';
+import KeyboardAwareScreen from '../../components/KeyboardAwareScreen';
 import type { RootScreenProps } from '../../types/navigation';
 
 export default function SignUpScreen({ navigation }: RootScreenProps<'SignUp'>) {
@@ -48,38 +49,33 @@ export default function SignUpScreen({ navigation }: RootScreenProps<'SignUp'>) 
   };
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: Colors.background }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.title}>Join Rakt Setu</Text>
-        <Text style={styles.subtitle}>Create your account, then complete your donor profile.</Text>
+    <KeyboardAwareScreen contentContainerStyle={styles.container}>
+      <Text style={styles.title}>Join Rakt Setu</Text>
+      <Text style={styles.subtitle}>Create your account, then complete your donor profile.</Text>
 
-        <View style={{ height: 20 }} />
-        <AppTextField label="Email" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" error={errors.email} />
-        <View style={{ height: 14 }} />
-        <AppTextField label="Password" value={password} onChangeText={setPassword} secureTextEntry error={errors.password} />
-        <View style={{ height: 14 }} />
-        <AppTextField label="Confirm Password" value={confirm} onChangeText={setConfirm} secureTextEntry error={errors.confirm} />
+      <View style={{ height: 20 }} />
+      <AppTextField label="Email" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" error={errors.email} />
+      <View style={{ height: 14 }} />
+      <AppTextField label="Password" value={password} onChangeText={setPassword} secureTextEntry error={errors.password} />
+      <View style={{ height: 14 }} />
+      <AppTextField label="Confirm Password" value={confirm} onChangeText={setConfirm} secureTextEntry error={errors.confirm} />
 
-        <Pressable style={styles.agreeRow} onPress={() => setAgreed(!agreed)}>
-          <View style={[styles.checkbox, agreed && styles.checkboxChecked]}>
-            {agreed ? <Text style={styles.checkmark}>✓</Text> : null}
-          </View>
-          <Text style={styles.agreeText}>I agree to the </Text>
-          <Pressable onPress={() => navigation.navigate('Terms')}>
-            <Text style={styles.link}>Terms & Conditions</Text>
-          </Pressable>
+      <Pressable style={styles.agreeRow} onPress={() => setAgreed(!agreed)}>
+        <View style={[styles.checkbox, agreed && styles.checkboxChecked]}>
+          {agreed ? <Text style={styles.checkmark}>✓</Text> : null}
+        </View>
+        <Text style={styles.agreeText}>I agree to the </Text>
+        <Pressable onPress={() => navigation.navigate('Terms')}>
+          <Text style={styles.link}>Terms & Conditions</Text>
         </Pressable>
+      </Pressable>
 
-        <PrimaryButton label="Sign Up" onPress={submit} loading={loading} style={{ marginTop: 12 }} />
+      <PrimaryButton label="Sign Up" onPress={submit} loading={loading} style={{ marginTop: 12 }} />
 
-        <Pressable style={{ alignSelf: 'center', marginTop: 16 }} onPress={() => navigation.goBack()}>
-          <Text style={styles.link}>Already have an account? Sign In</Text>
-        </Pressable>
-      </ScrollView>
-    </KeyboardAvoidingView>
+      <Pressable style={{ alignSelf: 'center', marginTop: 16 }} onPress={() => navigation.goBack()}>
+        <Text style={styles.link}>Already have an account? Sign In</Text>
+      </Pressable>
+    </KeyboardAwareScreen>
   );
 }
 

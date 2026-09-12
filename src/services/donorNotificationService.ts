@@ -28,7 +28,14 @@ interface NotifyMatchingDonorsParams {
  * itself already saved successfully; a notification failure shouldn't be
  * surfaced as if posting the request failed.
  */
-export async function notifyMatchingDonors(params: NotifyMatchingDonorsParams): Promise<void> {
+export interface NotifyResult {
+  /** Donors who got an in-app notification written to their inbox. */
+  inAppCount: number;
+  /** Of those, how many also had a push token to push to. */
+  pushCount: number;
+}
+
+export async function notifyMatchingDonors(params: NotifyMatchingDonorsParams): Promise<NotifyResult> {
   const { requestId, requesterUid, bloodType, hospitalName, unitsRequired } = params;
 
   // Fall back to an exact match if the stored type is somehow off-list, so
@@ -46,7 +53,7 @@ export async function notifyMatchingDonors(params: NotifyMatchingDonorsParams): 
     .filter((d) => d.id !== requesterUid)
     .map((d) => ({ uid: d.id, expoPushToken: d.data().expoPushToken as string | undefined }));
 
-  if (donors.length === 0) return;
+  if (donors.length === 0) return { inAppCount: 0, pushCount: 0 };
 
   const title = '🩸 Blood needed urgently';
   // Phrased to hold for every recipient of this batch — most no longer share
@@ -71,6 +78,11 @@ export async function notifyMatchingDonors(params: NotifyMatchingDonorsParams): 
     await batch.commit();
   }
 
+  // The in-app inbox is the notification that actually matters: it is the
+  // only one that survives a denied push permission, and it is what the
+  // Alerts tab reads. So it is written first and its failure propagates -
+  // push below is best-effort on top of it.
+
   // Expo push, batched 100 per call (Expo's own per-request limit).
   const tokens = donors
     .map((d) => d.expoPushToken)
@@ -80,6 +92,8 @@ export async function notifyMatchingDonors(params: NotifyMatchingDonorsParams): 
   for (let i = 0; i < tokens.length; i += 100) {
     pushChunks.push(tokens.slice(i, i + 100));
   }
+
+  let pushCount = 0;
 
   for (const chunk of pushChunks) {
     const messages = chunk.map((to) => ({
@@ -101,11 +115,15 @@ export async function notifyMatchingDonors(params: NotifyMatchingDonorsParams): 
         },
         body: JSON.stringify(messages),
       });
-      if (!res.ok) {
+      if (res.ok) {
+        pushCount += chunk.length;
+      } else {
         console.warn(`Expo push send failed: HTTP ${res.status}`);
       }
     } catch (e) {
       console.warn('Expo push send failed:', e);
     }
   }
+
+  return { inAppCount: donors.length, pushCount };
 }

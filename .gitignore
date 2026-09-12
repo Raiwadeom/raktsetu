@@ -15,3 +15,7 @@ web-build/
 .env.*.local
 *.log
 .DS_Store
+
+# Google Play service account key (eas submit)
+secrets/
+play-service-account*.json

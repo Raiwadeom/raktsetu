@@ -1,6 +1,7 @@
 import React, { type ReactNode } from 'react';
 import { StyleSheet, TextInput, View, type KeyboardTypeOptions } from 'react-native';
 import Text from './Text';
+import { useKeyboardAware } from './KeyboardAwareScreen';
 import { Colors } from '../constants/theme';
 
 interface Props {
@@ -30,6 +31,11 @@ export default function AppTextField({
   rightElement,
   editable = true,
 }: Props) {
+  // Lets the enclosing KeyboardAwareScreen scroll this field clear of the
+  // keyboard — including when moving between fields while it's already open,
+  // which fires no keyboard event of its own.
+  const { notifyFocus } = useKeyboardAware();
+
   return (
     <View style={styles.wrap}>
       <View style={[styles.inputRow, error ? styles.inputRowError : null]}>
@@ -45,6 +51,7 @@ export default function AppTextField({
           numberOfLines={numberOfLines}
           autoCapitalize={autoCapitalize || 'sentences'}
           editable={editable}
+          onFocus={notifyFocus}
         />
         {rightElement}
       </View>

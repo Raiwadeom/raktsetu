@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Image, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Image, ScrollView, StyleSheet, View } from 'react-native';
 import Text from '../../components/Text';
 import { Colors } from '../../constants/theme';
 import { formatDate } from '../../utils/formatters';
@@ -14,7 +14,10 @@ import type { RootScreenProps } from '../../types/navigation';
 export default function AdminUserDetailScreen({ route, navigation }: RootScreenProps<'AdminUserDetail'>) {
   const { uid } = route.params;
   const [user, setUser] = useState<AppUser | null | undefined>(undefined);
-  const [busy, setBusy] = useState(false);
+  // Tracks *which* action is running, not just that one is: a single shared
+  // flag put a spinner on every button at once, so the admin couldn't tell
+  // which one they had actually pressed.
+  const [busy, setBusy] = useState<'verify' | 'suspend' | null>(null);
 
   useEffect(() => watchUser(uid, setUser), [uid]);
 
@@ -24,12 +27,26 @@ export default function AdminUserDetailScreen({ route, navigation }: RootScreenP
   }
 
   const toggleVerified = async () => {
-    setBusy(true);
-    try { await setVerified(uid, !user.isVerified); } finally { setBusy(false); }
+    setBusy('verify');
+    try {
+      await setVerified(uid, !user.isVerified);
+    } catch (e) {
+      // Previously this rejected silently - the spinner stopped and nothing
+      // changed, with no way to tell a failed write from a slow one.
+      Alert.alert('Could not update verification', (e as Error).message || 'Please try again.');
+    } finally {
+      setBusy(null);
+    }
   };
   const toggleSuspended = async () => {
-    setBusy(true);
-    try { await setSuspended(uid, !user.isSuspended); } finally { setBusy(false); }
+    setBusy('suspend');
+    try {
+      await setSuspended(uid, !user.isSuspended);
+    } catch (e) {
+      Alert.alert('Could not update account status', (e as Error).message || 'Please try again.');
+    } finally {
+      setBusy(null);
+    }
   };
   const isPdf = user.idCardUrl && user.idCardUrl.toLowerCase().includes('.pdf');
 
@@ -79,20 +96,23 @@ export default function AdminUserDetailScreen({ route, navigation }: RootScreenP
           label={user.isVerified ? 'Reject Verification' : 'Verify ID'}
           outlined
           onPress={toggleVerified}
-          loading={busy}
+          loading={busy === 'verify'}
+          disabled={busy !== null}
           style={{ borderColor: user.isVerified ? Colors.warning : Colors.success, flexBasis: '48%' }}
         />
         <PrimaryButton
           label={user.isSuspended ? 'Reactivate Account' : 'Suspend Account'}
           outlined
           onPress={toggleSuspended}
-          loading={busy}
+          loading={busy === 'suspend'}
+          disabled={busy !== null}
           style={{ borderColor: Colors.warning, flexBasis: '48%' }}
         />
         <PrimaryButton
           label="Add Donation Record"
           outlined
           onPress={() => navigation.navigate('AdminDonationForm', { preselectedUserId: uid })}
+          disabled={busy !== null}
           style={{ flexBasis: '100%' }}
         />
       </View>
@@ -125,6 +145,6 @@ const styles = StyleSheet.create({
   card: { backgroundColor: '#fff', borderRadius: 16, padding: 16, marginTop: 20 },
   sectionTitle: { fontWeight: 'bold', marginTop: 24, marginBottom: 8, color: Colors.textPrimary },
   pdfBox: { backgroundColor: Colors.primary + '0F', borderRadius: 12, padding: 30, alignItems: 'center' },
-  idImage: { height: 200, borderRadius: 12 },
+  idImage: { width: '100%', height: 220, borderRadius: 12, resizeMode: 'contain', backgroundColor: '#fff' },
   actionsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
 });

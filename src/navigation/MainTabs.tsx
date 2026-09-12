@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Platform, Pressable, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import Text from '../components/Text';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -58,7 +59,7 @@ function ProfileStackNavigator() {
           title: 'My Profile',
           headerRight: () => (
             <Pressable onPress={() => navigation.navigate('HelpAbout')} hitSlop={10} style={{ marginRight: 4 }}>
-              <Text style={{ color: '#fff', fontSize: 20 }}>❓</Text>
+              <Ionicons name="help-circle-outline" size={24} color="#fff" />
             </Pressable>
           ),
         })}
@@ -84,39 +85,61 @@ export default function MainTabs() {
         headerShown: false,
         tabBarActiveTintColor: Colors.primary,
         tabBarInactiveTintColor: Colors.textSecondary,
+        tabBarStyle: {
+          height: Platform.OS === 'ios' ? 84 : 64,
+          paddingTop: 6,
+          paddingBottom: Platform.OS === 'ios' ? 26 : 8,
+          borderTopColor: Colors.divider,
+          backgroundColor: Colors.surface,
+        },
+        tabBarLabelStyle: { fontSize: 11.5, fontWeight: '600' },
       }}
     >
       <Tab.Screen
         name="Home"
         component={HomeStackNavigator}
-        options={{ tabBarIcon: ({ color }) => <TabIcon icon="🏠" color={color} /> }}
+        options={{
+          tabBarIcon: ({ color, focused }) => <TabIcon name="home" color={color} focused={focused} />,
+        }}
       />
       <Tab.Screen
         name="Alerts"
         component={NotificationsStackNavigator}
         options={{
-          tabBarIcon: ({ color }) => <TabIcon icon="🔔" color={color} badge={unread} />,
+          tabBarIcon: ({ color, focused }) => (
+            <TabIcon name="notifications" color={color} focused={focused} badge={unread} />
+          ),
         }}
       />
       <Tab.Screen
         name="Profile"
         component={ProfileStackNavigator}
-        options={{ tabBarIcon: ({ color }) => <TabIcon icon="👤" color={color} /> }}
+        options={{
+          tabBarIcon: ({ color, focused }) => <TabIcon name="person" color={color} focused={focused} />,
+        }}
       />
     </Tab.Navigator>
   );
 }
 
-function TabIcon({ icon, badge }: { icon: string; color?: string; badge?: number }) {
+/** Outline when inactive, solid when active — the standard iOS/Android tab
+ *  convention, and far crisper than the emoji glyphs this used to render
+ *  (those picked up the platform's own emoji font and ignored the tint color). */
+function TabIcon({
+  name, color, focused, badge,
+}: { name: 'home' | 'notifications' | 'person'; color: string; focused: boolean; badge?: number }) {
   return (
     <View>
-      <Text style={{ fontSize: 20 }}>{icon}</Text>
+      <Ionicons name={focused ? name : (`${name}-outline` as const)} size={24} color={color} />
       {badge && badge > 0 ? (
         <View style={{
-          position: 'absolute', top: -4, right: -8, backgroundColor: Colors.primary,
-          borderRadius: 8, minWidth: 16, height: 16, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 3,
+          position: 'absolute', top: -5, right: -10, backgroundColor: Colors.primary,
+          borderRadius: 9, minWidth: 18, height: 18, alignItems: 'center', justifyContent: 'center',
+          paddingHorizontal: 4, borderWidth: 1.5, borderColor: Colors.surface,
         }}>
-          <Text style={{ color: '#fff', fontSize: 10, fontWeight: '700' }}>{badge > 9 ? '9+' : badge}</Text>
+          <Text style={{ color: '#fff', fontSize: 10, lineHeight: 13, fontWeight: '700' }}>
+            {badge > 9 ? '9+' : badge}
+          </Text>
         </View>
       ) : null}
     </View>

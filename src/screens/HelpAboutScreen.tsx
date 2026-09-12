@@ -4,6 +4,7 @@ import Text from '../components/Text';
 import { Colors } from '../constants/theme';
 import { Fonts } from '../constants/fonts';
 import BrandHeader from '../components/BrandHeader';
+import { BUILT_BY, COLLEGE_CONTACT, COLLEGE_PHONE } from '../constants/appConstants';
 
 const HOW_TO_USE: { title: string; body: string }[] = [
   {
@@ -29,8 +30,8 @@ const HOW_TO_USE: { title: string; body: string }[] = [
   {
     title: '4. Notifications',
     body:
-      'Check the bell icon for blood-match alerts and admin announcements. Tap any notification to ' +
-      'open the request details, where you can call the requester directly with one tap.',
+      'Check the bell icon for blood-match alerts. Tap any notification to open the request ' +
+      'details, where you can call the requester directly with one tap.',
   },
   {
     title: '5. Your Profile',
@@ -42,12 +43,12 @@ const HOW_TO_USE: { title: string; body: string }[] = [
     title: '6. Admin Panel (verified admins only)',
     body:
       'Admins can manage registered users, verify ID cards, track and manage blood requests, log ' +
-      'donation history, and send announcements to all users or a specific blood type.',
+      'donation history, and export the registered-user list to Excel.',
   },
 ];
 
-const CONTACT_EMAIL = 'smusrcollege2007@rediffmail.com';
-const CONTACT_PHONE = '9921684708';
+const CONTACT_EMAIL = COLLEGE_CONTACT;
+const CONTACT_PHONE = COLLEGE_PHONE;
 
 export default function HelpAboutScreen() {
   return (
@@ -87,7 +88,7 @@ export default function HelpAboutScreen() {
 
       <View style={styles.creditDivider} />
       <View style={styles.creditBadge}>
-        <Text style={styles.creditText}>Built by Raiwade Om</Text>
+        <Text style={styles.creditText}>{BUILT_BY}</Text>
       </View>
     </ScrollView>
   );

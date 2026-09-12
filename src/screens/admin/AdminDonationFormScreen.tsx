@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Alert, FlatList, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Alert, FlatList, Modal, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Text from '../../components/Text';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Colors } from '../../constants/theme';
@@ -12,6 +12,7 @@ import { watchAllRequests } from '../../services/bloodRequestService';
 import { addRecord } from '../../services/donationHistoryService';
 import AppTextField from '../../components/AppTextField';
 import PrimaryButton from '../../components/PrimaryButton';
+import KeyboardAwareScreen from '../../components/KeyboardAwareScreen';
 import type { AppUser, BloodRequest, DonationTypeValue } from '../../types/models';
 import type { RootScreenProps } from '../../types/navigation';
 
@@ -84,8 +85,8 @@ export default function AdminDonationFormScreen({ route, navigation }: RootScree
   );
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: Colors.background }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={styles.container}>
+    <View style={{ flex: 1, backgroundColor: Colors.background }}>
+      <KeyboardAwareScreen contentContainerStyle={styles.container}>
         <Text style={styles.label}>User</Text>
         <Pressable style={styles.field} onPress={() => setUserPickerOpen(true)}>
           <Text style={selectedUser ? styles.fieldValue : styles.fieldPlaceholder}>
@@ -144,7 +145,7 @@ export default function AdminDonationFormScreen({ route, navigation }: RootScree
         )}
 
         <PrimaryButton label="Save Record" onPress={submit} loading={loading} style={{ marginTop: 28 }} />
-      </ScrollView>
+      </KeyboardAwareScreen>
 
       <Modal visible={userPickerOpen} transparent animationType="slide" onRequestClose={() => setUserPickerOpen(false)}>
         <View style={styles.modalBackdrop}>
@@ -172,7 +173,7 @@ export default function AdminDonationFormScreen({ route, navigation }: RootScree
           </View>
         </View>
       </Modal>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 

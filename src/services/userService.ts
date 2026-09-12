@@ -42,7 +42,11 @@ export function userFromDoc(docSnap: DocumentSnapshot<DocumentData> | QueryDocum
 }
 
 export function watchUser(uid: string, callback: (user: AppUser | null) => void): Unsubscribe {
-  return onSnapshot(doc(db, FS.users, uid), (snap) => callback(userFromDoc(snap)));
+  return onSnapshot(
+    doc(db, FS.users, uid),
+    (snap) => callback(userFromDoc(snap)),
+    (e) => console.warn('watchUser failed:', e),
+  );
 }
 
 export async function getUser(uid: string): Promise<AppUser | null> {
@@ -117,7 +121,14 @@ export async function deletePushTokenMirror(uid: string): Promise<void> {
 
 export function watchAllUsers(callback: (users: AppUser[]) => void): Unsubscribe {
   const q = query(collection(db, FS.users), orderBy('createdAt', 'desc'));
-  return onSnapshot(q, (snap) => callback(snap.docs.map((d) => userFromDoc(d)).filter((u): u is AppUser => u !== null)));
+  return onSnapshot(
+    q,
+    (snap) => callback(snap.docs.map((d) => userFromDoc(d)).filter((u): u is AppUser => u !== null)),
+    (e) => {
+      console.warn('watchAllUsers failed:', e);
+      callback([]);
+    },
+  );
 }
 
 export async function getAllUsersOnce(): Promise<AppUser[]> {

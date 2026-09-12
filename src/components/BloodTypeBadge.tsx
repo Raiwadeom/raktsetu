@@ -16,7 +16,7 @@ export default function BloodTypeBadge({ bloodType, size = 40 }: Props) {
         { width: size, height: size, borderRadius: size / 2, backgroundColor: colorForBloodType(bloodType) },
       ]}
     >
-      <Text style={[styles.text, { fontSize: size * 0.34 }]}>{bloodType || '?'}</Text>
+      <Text style={[styles.text, { fontSize: size * 0.34, lineHeight: size * 0.44 }]}>{bloodType || '?'}</Text>
     </View>
   );
 }
@@ -26,5 +26,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  text: { color: '#fff', fontWeight: '700' },
+  text: { color: '#fff', fontWeight: '700', includeFontPadding: false, textAlign: 'center' },
 });

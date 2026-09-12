@@ -36,12 +36,28 @@ function itemsRef(uid: string): CollectionReference<DocumentData> {
 
 export function watchNotifications(uid: string, callback: (items: AppNotification[]) => void): Unsubscribe {
   const q = query(itemsRef(uid), orderBy('createdAt', 'desc'));
-  return onSnapshot(q, (snap) => callback(snap.docs.map(notificationFromDoc)));
+  return onSnapshot(
+    q,
+    (snap) => callback(snap.docs.map(notificationFromDoc)),
+    // A rejected listener otherwise leaves the Alerts tab spinning forever
+    // instead of showing its empty state.
+    (e) => {
+      console.warn('watchNotifications failed:', e);
+      callback([]);
+    },
+  );
 }
 
 export function watchUnreadCount(uid: string, callback: (count: number) => void): Unsubscribe {
   const q = query(itemsRef(uid), where('isRead', '==', false));
-  return onSnapshot(q, (snap) => callback(snap.size));
+  return onSnapshot(
+    q,
+    (snap) => callback(snap.size),
+    (e) => {
+      console.warn('watchUnreadCount failed:', e);
+      callback(0);
+    },
+  );
 }
 
 export async function markAsRead(uid: string, notificationId: string): Promise<void> {

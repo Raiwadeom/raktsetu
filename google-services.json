@@ -29,6 +29,85 @@
             {
               "client_id": "799125597564-p7kc4l2ro8ugdp2rk68hcvfos2tguprg.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "799125597564-h2nd66nn4cg9u7ii2mhi264hfinfqnp0.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.raktsetu.raktSetu"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:799125597564:android:e508d827f922fef4c048f9",
+        "android_client_info": {
+          "package_name": "com.raktsetu.rakt_setu"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "799125597564-p7kc4l2ro8ugdp2rk68hcvfos2tguprg.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAPf2HQN3hQA-fo55FyNyBimDY8KhFzJag"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "799125597564-p7kc4l2ro8ugdp2rk68hcvfos2tguprg.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "799125597564-h2nd66nn4cg9u7ii2mhi264hfinfqnp0.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.raktsetu.raktSetu"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:799125597564:android:ced2cbfeee75e0bac048f9",
+        "android_client_info": {
+          "package_name": "com.raktsetusmu.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "799125597564-p7kc4l2ro8ugdp2rk68hcvfos2tguprg.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAPf2HQN3hQA-fo55FyNyBimDY8KhFzJag"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "799125597564-p7kc4l2ro8ugdp2rk68hcvfos2tguprg.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "799125597564-h2nd66nn4cg9u7ii2mhi264hfinfqnp0.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.raktsetu.raktSetu"
+              }
             }
           ]
         }

@@ -6,6 +6,7 @@ import { validateEmail } from '../../utils/validators';
 import { useAuth } from '../../context/AuthContext';
 import AppTextField from '../../components/AppTextField';
 import PrimaryButton from '../../components/PrimaryButton';
+import KeyboardAwareScreen from '../../components/KeyboardAwareScreen';
 import type { RootScreenProps } from '../../types/navigation';
 
 export default function ForgotPasswordScreen({ navigation }: RootScreenProps<'ForgotPassword'>) {
@@ -42,18 +43,18 @@ export default function ForgotPasswordScreen({ navigation }: RootScreenProps<'Fo
   }
 
   return (
-    <View style={styles.container}>
+    <KeyboardAwareScreen contentContainerStyle={styles.container}>
       <Text style={styles.title}>Forgot your password?</Text>
       <Text style={styles.subtitle}>Enter your registered email and we'll send you a link to reset it.</Text>
       <View style={{ height: 20 }} />
       <AppTextField label="Email" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" error={error} />
       <PrimaryButton label="Send Reset Link" onPress={submit} loading={loading} style={{ marginTop: 20 }} />
-    </View>
+    </KeyboardAwareScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background, padding: 24, paddingTop: 32 },
+  container: { padding: 24, paddingTop: 32, paddingBottom: 40 },
   title: { fontSize: 20, fontWeight: 'bold', color: Colors.textPrimary },
   subtitle: { color: Colors.textSecondary, marginTop: 6 },
   centerContainer: { flex: 1, backgroundColor: Colors.background, alignItems: 'center', justifyContent: 'center', padding: 24 },

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, View } from 'react-native';
 import Text from '../../components/Text';
 import { Colors } from '../../constants/theme';
 import { validateEmail } from '../../utils/validators';
@@ -7,6 +7,8 @@ import { useAuth } from '../../context/AuthContext';
 import AppTextField from '../../components/AppTextField';
 import PrimaryButton from '../../components/PrimaryButton';
 import BrandHeader from '../../components/BrandHeader';
+import KeyboardAwareScreen from '../../components/KeyboardAwareScreen';
+import { BUILT_BY } from '../../constants/appConstants';
 import type { RootScreenProps } from '../../types/navigation';
 
 export default function LoginScreen({ navigation }: RootScreenProps<'Login'>) {
@@ -34,66 +36,63 @@ export default function LoginScreen({ navigation }: RootScreenProps<'Login'>) {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: Colors.background }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <ScrollView contentContainerStyle={styles.container}>
-        <View style={styles.header}>
-          <BrandHeader theme="light" logoSize={80} />
+    <KeyboardAwareScreen contentContainerStyle={styles.container}>
+      <View style={styles.header}>
+        <BrandHeader theme="light" logoSize={80} />
+      </View>
+
+      <View style={styles.tabs}>
+        <View style={[styles.tab, styles.tabActive]}>
+          <Text style={styles.tabTextActive}>Sign In</Text>
         </View>
-
-        <View style={styles.tabs}>
-          <View style={[styles.tab, styles.tabActive]}>
-            <Text style={styles.tabTextActive}>Sign In</Text>
-          </View>
-          <Pressable style={styles.tab} onPress={() => navigation.navigate('SignUp')}>
-            <Text style={styles.tabText}>Sign Up</Text>
-          </Pressable>
-        </View>
-
-        <AppTextField
-          label="Email"
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          error={errors.email}
-        />
-        <View style={{ height: 14 }} />
-        <AppTextField
-          label="Password"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-          error={errors.password}
-        />
-
-        <Pressable onPress={() => navigation.navigate('ForgotPassword')} style={styles.forgotBtn}>
-          <Text style={styles.link}>Forgot Password?</Text>
+        <Pressable style={styles.tab} onPress={() => navigation.navigate('SignUp')}>
+          <Text style={styles.tabText}>Sign Up</Text>
         </Pressable>
+      </View>
 
-        <PrimaryButton label="Sign In" onPress={submit} loading={loading} style={{ marginTop: 8 }} />
+      <AppTextField
+        label="Email"
+        value={email}
+        onChangeText={setEmail}
+        keyboardType="email-address"
+        autoCapitalize="none"
+        error={errors.email}
+      />
+      <View style={{ height: 14 }} />
+      <AppTextField
+        label="Password"
+        value={password}
+        onChangeText={setPassword}
+        secureTextEntry
+        error={errors.password}
+      />
 
-        <View style={styles.dividerRow}>
-          <View style={styles.divider} />
-          <Text style={styles.dividerText}>or</Text>
-          <View style={styles.divider} />
-        </View>
+      <Pressable onPress={() => navigation.navigate('ForgotPassword')} style={styles.forgotBtn}>
+        <Text style={styles.link}>Forgot Password?</Text>
+      </Pressable>
 
-        <PrimaryButton label="Admin Login" outlined onPress={() => navigation.navigate('AdminLogin')} />
+      <PrimaryButton label="Sign In" onPress={submit} loading={loading} style={{ marginTop: 8 }} />
 
-        <View style={styles.footerLinks}>
-          <Pressable onPress={() => navigation.navigate('Terms')}>
-            <Text style={styles.link}>Terms & Conditions</Text>
-          </Pressable>
-          <Text style={styles.footerDot}>·</Text>
-          <Pressable onPress={() => navigation.navigate('HelpAbout')}>
-            <Text style={styles.link}>Help & About</Text>
-          </Pressable>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+      <View style={styles.dividerRow}>
+        <View style={styles.divider} />
+        <Text style={styles.dividerText}>or</Text>
+        <View style={styles.divider} />
+      </View>
+
+      <PrimaryButton label="Admin Login" outlined onPress={() => navigation.navigate('AdminLogin')} />
+
+      <View style={styles.footerLinks}>
+        <Pressable onPress={() => navigation.navigate('Terms')}>
+          <Text style={styles.link}>Terms & Conditions</Text>
+        </Pressable>
+        <Text style={styles.footerDot}>·</Text>
+        <Pressable onPress={() => navigation.navigate('HelpAbout')}>
+          <Text style={styles.link}>Help & About</Text>
+        </Pressable>
+      </View>
+
+      <Text style={styles.builtBy}>{BUILT_BY}</Text>
+    </KeyboardAwareScreen>
   );
 }
 
@@ -119,4 +118,8 @@ const styles = StyleSheet.create({
   dividerText: { marginHorizontal: 10, color: Colors.textSecondary },
   footerLinks: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 24 },
   footerDot: { color: Colors.textSecondary, marginHorizontal: 10 },
+  builtBy: {
+    textAlign: 'center', marginTop: 20, fontSize: 12, letterSpacing: 0.2,
+    color: Colors.textSecondary,
+  },
 });

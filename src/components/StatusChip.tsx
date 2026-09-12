@@ -20,6 +20,6 @@ export default function StatusChip({ status }: { status: RequestStatusValue | st
 }
 
 const styles = StyleSheet.create({
-  chip: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
-  text: { fontSize: 12, fontWeight: '600' },
+  chip: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20 },
+  text: { fontSize: 12, lineHeight: 17, fontWeight: '600', includeFontPadding: false },
 });

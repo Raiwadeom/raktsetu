@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, StyleSheet, View } from 'react-native';
 import Text from '../../components/Text';
 import { Colors } from '../../constants/theme';
 import { validateEmail } from '../../utils/validators';
 import { useAuth } from '../../context/AuthContext';
 import AppTextField from '../../components/AppTextField';
 import PrimaryButton from '../../components/PrimaryButton';
+import KeyboardAwareScreen from '../../components/KeyboardAwareScreen';
 
 export default function AdminLoginScreen() {
   const { adminSignIn } = useAuth();
@@ -31,32 +32,27 @@ export default function AdminLoginScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: Colors.primaryDark }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <ScrollView contentContainerStyle={styles.container}>
-        <View style={styles.card}>
-          <Text style={styles.icon}>🛡️</Text>
-          <Text style={styles.title}>Rakt Setu — Admin</Text>
-          <Text style={styles.subtitle}>Restricted access for verified administrators only.</Text>
+    <KeyboardAwareScreen backgroundColor={Colors.primaryDark} contentContainerStyle={styles.container}>
+      <View style={styles.card}>
+        <Text style={styles.icon}>🛡️</Text>
+        <Text style={styles.title}>Rakt Setu — Admin</Text>
+        <Text style={styles.subtitle}>Restricted access for verified administrators only.</Text>
 
-          <View style={{ height: 20 }} />
-          <AppTextField
-            label="Admin Email"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            error={errors.email}
-          />
-          <View style={{ height: 14 }} />
-          <AppTextField label="Password" value={password} onChangeText={setPassword} secureTextEntry error={errors.password} />
+        <View style={{ height: 20 }} />
+        <AppTextField
+          label="Admin Email"
+          value={email}
+          onChangeText={setEmail}
+          keyboardType="email-address"
+          autoCapitalize="none"
+          error={errors.email}
+        />
+        <View style={{ height: 14 }} />
+        <AppTextField label="Password" value={password} onChangeText={setPassword} secureTextEntry error={errors.password} />
 
-          <PrimaryButton label="Login as Admin" onPress={submit} loading={loading} style={{ marginTop: 20 }} />
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+        <PrimaryButton label="Login as Admin" onPress={submit} loading={loading} style={{ marginTop: 20 }} />
+      </View>
+    </KeyboardAwareScreen>
   );
 }
 

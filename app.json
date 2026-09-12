@@ -2,7 +2,7 @@
   "expo": {
     "name": "Rakt Setu",
     "slug": "raktsetu",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "icon": "./assets/app_icon.png",
@@ -29,7 +29,8 @@
       "permissions": [
         "NOTIFICATIONS"
       ],
-      "versionCode": 4
+      "versionCode": 5,
+      "softwareKeyboardLayoutMode": "resize"
     },
     "web": {
       "bundler": "metro"

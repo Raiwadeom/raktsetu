@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { FlatList, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Alert, FlatList, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Text from '../../components/Text';
 import { Colors } from '../../constants/theme';
 import { RequestStatus } from '../../constants/appConstants';
@@ -14,6 +14,9 @@ import type { BloodRequest, RequestStatusValue } from '../../types/models';
 export default function AdminRequestsScreen() {
   const [requests, setRequests] = useState<BloodRequest[] | null>(null);
   const [filter, setFilter] = useState<RequestStatusValue | null>(null);
+  // id of the request currently being written to, so its row shows progress
+  // and cannot be double-tapped into two conflicting writes.
+  const [busyId, setBusyId] = useState<string | null>(null);
 
   useEffect(() => watchAllRequests(setRequests), []);
 
@@ -21,13 +24,34 @@ export default function AdminRequestsScreen() {
 
   const filtered = filter ? requests.filter((r) => r.status === filter) : requests;
 
+  // These were fire-and-forget: a rejected write (offline, or rules) surfaced
+  // as nothing at all - the row simply never changed.
+  const setStatus = async (id: string, status: RequestStatusValue) => {
+    setBusyId(id);
+    try {
+      await updateStatus(id, status);
+    } catch (e) {
+      Alert.alert('Could not update request', (e as Error).message || 'Please try again.');
+    } finally {
+      setBusyId(null);
+    }
+  };
+
   const confirmDelete = async (id: string) => {
     const ok = await confirmAsync(
       'Delete Request',
       'Delete this blood request permanently? This is meant for spam or fake requests.',
       'Delete',
     );
-    if (ok) deleteRequest(id);
+    if (!ok) return;
+    setBusyId(id);
+    try {
+      await deleteRequest(id);
+    } catch (e) {
+      Alert.alert('Could not delete request', (e as Error).message || 'Please try again.');
+    } finally {
+      setBusyId(null);
+    }
   };
 
   return (
@@ -59,25 +83,47 @@ export default function AdminRequestsScreen() {
               <Text style={styles.metaSmall}>Requested by {item.requesterName} • {timeAgo(item.createdAt)}</Text>
               <Text style={styles.metaSmall}>Views: {item.viewCount} • Responded: {item.respondedUids.length}</Text>
               <View style={styles.actionsRow}>
-                {item.status !== RequestStatus.fulfilled && (
-                  <Pressable onPress={() => updateStatus(item.id, RequestStatus.fulfilled)}>
-                    <Text style={[styles.actionText, { color: Colors.success }]}>Mark Fulfilled</Text>
-                  </Pressable>
+                {busyId === item.id ? (
+                  <ActivityIndicator size="small" color={Colors.primary} style={{ marginVertical: 4 }} />
+                ) : (
+                  <>
+                    {item.status !== RequestStatus.fulfilled && (
+                      <Action
+                        label="Mark Fulfilled"
+                        color={Colors.success}
+                        onPress={() => setStatus(item.id, RequestStatus.fulfilled)}
+                      />
+                    )}
+                    {item.status !== RequestStatus.cancelled && (
+                      <Action
+                        label="Cancel"
+                        color={Colors.warning}
+                        onPress={() => setStatus(item.id, RequestStatus.cancelled)}
+                      />
+                    )}
+                    <Action label="Delete" color={Colors.danger} onPress={() => confirmDelete(item.id)} />
+                  </>
                 )}
-                {item.status !== RequestStatus.cancelled && (
-                  <Pressable onPress={() => updateStatus(item.id, RequestStatus.cancelled)}>
-                    <Text style={[styles.actionText, { color: Colors.warning }]}>Cancel</Text>
-                  </Pressable>
-                )}
-                <Pressable onPress={() => confirmDelete(item.id)}>
-                  <Text style={[styles.actionText, { color: Colors.danger }]}>Delete</Text>
-                </Pressable>
               </View>
             </View>
           )}
         />
       )}
     </View>
+  );
+}
+
+/** The bare <Text> these used to be gave a ~16px tap target with no pressed
+ *  state - easy to miss, and no feedback when you did hit it. */
+function Action({ label, color, onPress }: { label: string; color: string; onPress: () => void }) {
+  return (
+    <Pressable
+      hitSlop={8}
+      onPress={onPress}
+      style={({ pressed }) => [styles.actionBtn, pressed && { opacity: 0.5 }]}
+    >
+      <Text style={[styles.actionText, { color }]}>{label}</Text>
+    </Pressable>
   );
 }
 
@@ -90,7 +136,7 @@ function Chip({ label, selected, onPress }: { label: string; selected: boolean; 
 }
 
 const styles = StyleSheet.create({
-  chipsRow: { flexGrow: 0, marginVertical: 10 },
+  chipsRow: { flexGrow: 0, marginVertical: 10, paddingVertical: 2 },
   chip: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20, backgroundColor: '#fff', marginRight: 8, borderWidth: 1, borderColor: Colors.divider },
   chipSelected: { backgroundColor: Colors.primary + '2A', borderColor: Colors.primary },
   chipText: { fontSize: 12, color: Colors.textSecondary },
@@ -101,6 +147,7 @@ const styles = StyleSheet.create({
   patient: { fontWeight: '700', color: Colors.textPrimary },
   meta: { fontSize: 12, color: Colors.textSecondary, marginTop: 2 },
   metaSmall: { fontSize: 11.5, color: Colors.textSecondary, marginTop: 6 },
-  actionsRow: { flexDirection: 'row', gap: 16, marginTop: 10 },
-  actionText: { fontWeight: '600', fontSize: 13 },
+  actionsRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginTop: 10 },
+  actionBtn: { paddingVertical: 6, paddingRight: 12 },
+  actionText: { fontWeight: '600', fontSize: 13, lineHeight: 18 },
 });

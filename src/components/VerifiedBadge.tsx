@@ -18,7 +18,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 20,
   },
-  badgeSmall: { paddingHorizontal: 6, paddingVertical: 2 },
-  text: { color: Colors.success, fontWeight: '600', fontSize: 12 },
-  textSmall: { fontSize: 11 },
+  badgeSmall: { paddingHorizontal: 8, paddingVertical: 3 },
+  text: { color: Colors.success, fontWeight: '600', fontSize: 12, lineHeight: 17, includeFontPadding: false },
+  textSmall: { fontSize: 11, lineHeight: 16 },
 });

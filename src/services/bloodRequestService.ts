@@ -19,7 +19,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { FS, RequestStatus } from '../constants/appConstants';
-import { notifyMatchingDonors } from './donorNotificationService';
+import { notifyMatchingDonors, type NotifyResult } from './donorNotificationService';
 import type { BloodRequest, NewBloodRequestInput, RequestStatusValue } from '../types/models';
 
 function requestFromDoc(docSnap: QueryDocumentSnapshot<DocumentData>): BloodRequest {
@@ -47,11 +47,19 @@ function requestFromDoc(docSnap: QueryDocumentSnapshot<DocumentData>): BloodRequ
  * project runs on the free Spark plan, so there's no server-side Cloud
  * Function doing this instead.
  *
- * A notification failure is swallowed, not thrown: the request itself has
- * already saved successfully by that point, and the caller shouldn't treat
- * "posting a request" as failed just because the push step hit a problem.
+ * A notification failure is not thrown: the request itself has already saved
+ * successfully by that point, and the caller shouldn't treat "posting a
+ * request" as failed just because the notify step hit a problem. It is still
+ * *reported* back though - silently claiming donors were alerted when nobody
+ * was is the worse failure for an app people use in an emergency.
  */
-export async function createRequest(request: NewBloodRequestInput): Promise<string> {
+export interface CreateRequestResult {
+  id: string;
+  notified: NotifyResult | null;
+  notifyError: Error | null;
+}
+
+export async function createRequest(request: NewBloodRequestInput): Promise<CreateRequestResult> {
   const docRef = await addDoc(collection(db, FS.bloodRequests), {
     requesterUid: request.requesterUid,
     requesterName: request.requesterName,
@@ -68,18 +76,18 @@ export async function createRequest(request: NewBloodRequestInput): Promise<stri
   });
 
   try {
-    await notifyMatchingDonors({
+    const notified = await notifyMatchingDonors({
       requestId: docRef.id,
       requesterUid: request.requesterUid,
       bloodType: request.bloodType,
       hospitalName: request.hospitalName,
       unitsRequired: request.unitsRequired,
     });
+    return { id: docRef.id, notified, notifyError: null };
   } catch (e) {
     console.warn('Failed to notify matching donors:', e);
+    return { id: docRef.id, notified: null, notifyError: e as Error };
   }
-
-  return docRef.id;
 }
 
 export function watchMyRequests(uid: string, callback: (requests: BloodRequest[]) => void): Unsubscribe {
@@ -88,7 +96,17 @@ export function watchMyRequests(uid: string, callback: (requests: BloodRequest[]
     where('requesterUid', '==', uid),
     orderBy('createdAt', 'desc'),
   );
-  return onSnapshot(q, (snap) => callback(snap.docs.map(requestFromDoc)));
+  return onSnapshot(
+    q,
+    (snap) => callback(snap.docs.map(requestFromDoc)),
+    // Without an error handler a rejected listener (offline, rules, a missing
+    // index) just stops delivering, and the screen sits on its spinner
+    // forever. Reporting an empty result at least renders the empty state.
+    (e) => {
+      console.warn('watchMyRequests failed:', e);
+      callback([]);
+    },
+  );
 }
 
 export function watchOpenRequests(callback: (requests: BloodRequest[]) => void): Unsubscribe {
@@ -97,13 +115,27 @@ export function watchOpenRequests(callback: (requests: BloodRequest[]) => void):
     where('status', '==', RequestStatus.pending),
     orderBy('createdAt', 'desc'),
   );
-  return onSnapshot(q, (snap) => callback(snap.docs.map(requestFromDoc)));
+  return onSnapshot(
+    q,
+    (snap) => callback(snap.docs.map(requestFromDoc)),
+    (e) => {
+      console.warn('watchOpenRequests failed:', e);
+      callback([]);
+    },
+  );
 }
 
 export function watchRequest(id: string, callback: (request: BloodRequest | null) => void): Unsubscribe {
-  return onSnapshot(doc(db, FS.bloodRequests, id), (snap) => {
-    callback(snap.exists() ? requestFromDoc(snap as QueryDocumentSnapshot<DocumentData>) : null);
-  });
+  return onSnapshot(
+    doc(db, FS.bloodRequests, id),
+    (snap) => {
+      callback(snap.exists() ? requestFromDoc(snap as QueryDocumentSnapshot<DocumentData>) : null);
+    },
+    (e) => {
+      console.warn('watchRequest failed:', e);
+      callback(null);
+    },
+  );
 }
 
 export async function getRequestOnce(id: string): Promise<BloodRequest | null> {
@@ -123,7 +155,14 @@ export async function markResponded(requestId: string, uid: string): Promise<voi
 
 export function watchAllRequests(callback: (requests: BloodRequest[]) => void): Unsubscribe {
   const q = query(collection(db, FS.bloodRequests), orderBy('createdAt', 'desc'));
-  return onSnapshot(q, (snap) => callback(snap.docs.map(requestFromDoc)));
+  return onSnapshot(
+    q,
+    (snap) => callback(snap.docs.map(requestFromDoc)),
+    (e) => {
+      console.warn('watchAllRequests failed:', e);
+      callback([]);
+    },
+  );
 }
 
 export async function updateStatus(requestId: string, status: RequestStatusValue): Promise<void> {

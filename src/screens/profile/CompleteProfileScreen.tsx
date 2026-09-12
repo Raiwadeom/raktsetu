@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, Pressable, StyleSheet, View } from 'react-native';
 import Text from '../../components/Text';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
@@ -15,6 +15,7 @@ import { uploadIdCard, uploadProfilePhoto } from '../../services/cloudinaryServi
 import AppTextField from '../../components/AppTextField';
 import SelectField from '../../components/SelectField';
 import PrimaryButton from '../../components/PrimaryButton';
+import KeyboardAwareScreen from '../../components/KeyboardAwareScreen';
 import type { PickedFile } from '../../types/models';
 
 interface Props {
@@ -240,115 +241,113 @@ export default function CompleteProfileScreen({ navigation, route }: Props) {
   const hasIdFile = !!pickedIdFile || !!existingIdCardUrl;
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: Colors.background }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={styles.container}>
-        {!isEditing && (
-          <>
-            <Text style={styles.title}>Just one more step</Text>
-            <Text style={styles.subtitle}>
-              This information helps match you to blood requests and lets the admin verify your identity.
-            </Text>
-            <View style={{ height: 16 }} />
-          </>
-        )}
-
-        {/* Also locked while saving: swapping the pick mid-upload would leave
-            the avatar showing one image while a different one is the URL
-            actually written to the profile. */}
-        <Pressable style={styles.photoWrap} onPress={pickProfilePhoto} disabled={resizingPhoto || loading}>
-          {photoUri ? (
-            <Image source={{ uri: photoUri }} style={styles.photo} />
-          ) : (
-            <View style={[styles.photo, styles.photoPlaceholder]}>
-              <Text style={{ fontSize: 32 }}>👤</Text>
-            </View>
-          )}
-          {resizingPhoto ? (
-            <View style={[styles.photo, styles.photoOverlay]}>
-              <ActivityIndicator color="#fff" />
-            </View>
-          ) : null}
-          <View style={styles.cameraBadge}>
-            <Text style={{ color: '#fff', fontSize: 12 }}>📷</Text>
-          </View>
-        </Pressable>
-        {resizingPhoto ? (
-          <Text style={styles.optimizingText}>Optimizing image…</Text>
-        ) : null}
-        {photoUploadProgress != null && photoUploadProgress < 1 ? (
-          <View style={[styles.progressTrack, { marginTop: 10, width: 140, alignSelf: 'center' }]}>
-            <View style={[styles.progressFill, { width: `${Math.round(photoUploadProgress * 100)}%` }]} />
-          </View>
-        ) : null}
-
-        <View style={{ height: 20 }} />
-        <AppTextField label="Full Name" value={fullName} onChangeText={setFullName} error={errors.fullName} />
-        <View style={{ height: 14 }} />
-        <SelectField label="Blood Type" value={bloodType} options={BLOOD_TYPES} onChange={setBloodType} error={errors.bloodType} />
-        <View style={{ height: 14 }} />
-        <SelectField label="Gender" value={gender} options={GENDERS} onChange={setGender} error={errors.gender} />
-        <View style={{ height: 14 }} />
-        <AppTextField label="Phone Number (10-digit)" value={phone} onChangeText={setPhone} keyboardType="phone-pad" error={errors.phone} />
-        <View style={{ height: 14 }} />
-        <AppTextField label="City / Area (optional)" value={city} onChangeText={setCity} />
-        <View style={{ height: 14 }} />
-
-        <Pressable style={styles.dateField} onPress={() => setShowDatePicker(true)}>
-          <Text style={dob ? styles.dateValue : styles.datePlaceholder}>
-            {dob ? formatDate(dob) : 'Date of Birth (optional)'}
+    <KeyboardAwareScreen contentContainerStyle={styles.container}>
+      {!isEditing && (
+        <>
+          <Text style={styles.title}>Just one more step</Text>
+          <Text style={styles.subtitle}>
+            This information helps match you to blood requests and lets the admin verify your identity.
           </Text>
-        </Pressable>
-        {showDatePicker && (
-          <DateTimePicker
-            value={dob || new Date(2000, 0, 1)}
-            mode="date"
-            maximumDate={new Date()}
-            onChange={(_event, selected) => {
-              setShowDatePicker(false);
-              if (selected) setDob(selected);
-            }}
-          />
+          <View style={{ height: 16 }} />
+        </>
+      )}
+
+      {/* Also locked while saving: swapping the pick mid-upload would leave
+          the avatar showing one image while a different one is the URL
+          actually written to the profile. */}
+      <Pressable style={styles.photoWrap} onPress={pickProfilePhoto} disabled={resizingPhoto || loading}>
+        {photoUri ? (
+          <Image source={{ uri: photoUri }} style={styles.photo} />
+        ) : (
+          <View style={[styles.photo, styles.photoPlaceholder]}>
+            <Text style={{ fontSize: 32 }}>👤</Text>
+          </View>
+        )}
+        {resizingPhoto ? (
+          <View style={[styles.photo, styles.photoOverlay]}>
+            <ActivityIndicator color="#fff" />
+          </View>
+        ) : null}
+        <View style={styles.cameraBadge}>
+          <Text style={{ color: '#fff', fontSize: 12 }}>📷</Text>
+        </View>
+      </Pressable>
+      {resizingPhoto ? (
+        <Text style={styles.optimizingText}>Optimizing image…</Text>
+      ) : null}
+      {photoUploadProgress != null && photoUploadProgress < 1 ? (
+        <View style={[styles.progressTrack, { marginTop: 10, width: 140, alignSelf: 'center' }]}>
+          <View style={[styles.progressFill, { width: `${Math.round(photoUploadProgress * 100)}%` }]} />
+        </View>
+      ) : null}
+
+      <View style={{ height: 20 }} />
+      <AppTextField label="Full Name" value={fullName} onChangeText={setFullName} error={errors.fullName} />
+      <View style={{ height: 14 }} />
+      <SelectField label="Blood Type" value={bloodType} options={BLOOD_TYPES} onChange={setBloodType} error={errors.bloodType} />
+      <View style={{ height: 14 }} />
+      <SelectField label="Gender" value={gender} options={GENDERS} onChange={setGender} error={errors.gender} />
+      <View style={{ height: 14 }} />
+      <AppTextField label="Phone Number (10-digit)" value={phone} onChangeText={setPhone} keyboardType="phone-pad" error={errors.phone} />
+      <View style={{ height: 14 }} />
+      <AppTextField label="City / Area (optional)" value={city} onChangeText={setCity} />
+      <View style={{ height: 14 }} />
+
+      <Pressable style={styles.dateField} onPress={() => setShowDatePicker(true)}>
+        <Text style={dob ? styles.dateValue : styles.datePlaceholder}>
+          {dob ? formatDate(dob) : 'Date of Birth (optional)'}
+        </Text>
+      </Pressable>
+      {showDatePicker && (
+        <DateTimePicker
+          value={dob || new Date(2000, 0, 1)}
+          mode="date"
+          maximumDate={new Date()}
+          onChange={(_event, selected) => {
+            setShowDatePicker(false);
+            if (selected) setDob(selected);
+          }}
+        />
+      )}
+
+      <View style={{ height: 20 }} />
+      <View style={styles.idCard}>
+        <Text style={styles.idCardTitle}>🪪 ID Card (Aadhar / College ID)</Text>
+        <Text style={styles.idCardSubtitle}>Required for admin verification. JPG/PNG photos are optimized automatically. PDF max 5 MB.</Text>
+
+        {pickedIdFile && pickedIdFile.mimeType === 'application/pdf' ? (
+          <Text style={styles.idFileNote}>📄 {pickedIdFile.name}</Text>
+        ) : pickedIdFile ? (
+          <Image source={{ uri: pickedIdFile.uri }} style={styles.idPreview} />
+        ) : existingIdCardUrl ? (
+          <Text style={styles.idFileNoteSuccess}>✓ ID card already uploaded</Text>
+        ) : (
+          <Text style={styles.idFileNote}>No file selected</Text>
         )}
 
-        <View style={{ height: 20 }} />
-        <View style={styles.idCard}>
-          <Text style={styles.idCardTitle}>🪪 ID Card (Aadhar / College ID)</Text>
-          <Text style={styles.idCardSubtitle}>Required for admin verification. JPG/PNG photos are optimized automatically. PDF max 5 MB.</Text>
-
-          {pickedIdFile && pickedIdFile.mimeType === 'application/pdf' ? (
-            <Text style={styles.idFileNote}>📄 {pickedIdFile.name}</Text>
-          ) : pickedIdFile ? (
-            <Image source={{ uri: pickedIdFile.uri }} style={styles.idPreview} />
-          ) : existingIdCardUrl ? (
-            <Text style={styles.idFileNoteSuccess}>✓ ID card already uploaded</Text>
-          ) : (
-            <Text style={styles.idFileNote}>No file selected</Text>
-          )}
-
-          {idUploadProgress != null && idUploadProgress < 1 ? (
-            <View style={styles.progressTrack}>
-              <View style={[styles.progressFill, { width: `${Math.round(idUploadProgress * 100)}%` }]} />
-            </View>
-          ) : null}
-
-          <PrimaryButton
-            label={resizingIdCard ? 'Optimizing image…' : hasIdFile ? 'Replace File' : 'Upload File'}
-            outlined
-            loading={resizingIdCard}
-            disabled={loading}
-            onPress={pickIdCard}
-            style={{ marginTop: 12 }}
-          />
-        </View>
+        {idUploadProgress != null && idUploadProgress < 1 ? (
+          <View style={styles.progressTrack}>
+            <View style={[styles.progressFill, { width: `${Math.round(idUploadProgress * 100)}%` }]} />
+          </View>
+        ) : null}
 
         <PrimaryButton
-          label={isEditing ? 'Save Changes' : 'Save & Continue'}
-          onPress={submit}
-          loading={loading}
-          style={{ marginTop: 24 }}
+          label={resizingIdCard ? 'Optimizing image…' : hasIdFile ? 'Replace File' : 'Upload File'}
+          outlined
+          loading={resizingIdCard}
+          disabled={loading}
+          onPress={pickIdCard}
+          style={{ marginTop: 12 }}
         />
-      </ScrollView>
-    </KeyboardAvoidingView>
+      </View>
+
+      <PrimaryButton
+        label={isEditing ? 'Save Changes' : 'Save & Continue'}
+        onPress={submit}
+        loading={loading}
+        style={{ marginTop: 24 }}
+      />
+    </KeyboardAwareScreen>
   );
 }
 

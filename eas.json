@@ -25,6 +25,29 @@
     }
   },
   "submit": {
-    "production": {}
+    "internal": {
+      "android": {
+        "serviceAccountKeyPath": "./secrets/play-service-account.json",
+        "applicationId": "com.raktsetusmu.app",
+        "track": "internal",
+        "releaseStatus": "completed"
+      }
+    },
+    "alpha": {
+      "android": {
+        "serviceAccountKeyPath": "./secrets/play-service-account.json",
+        "applicationId": "com.raktsetusmu.app",
+        "track": "alpha",
+        "releaseStatus": "completed"
+      }
+    },
+    "production": {
+      "android": {
+        "serviceAccountKeyPath": "./secrets/play-service-account.json",
+        "applicationId": "com.raktsetusmu.app",
+        "track": "production",
+        "releaseStatus": "completed"
+      }
+    }
   }
 }

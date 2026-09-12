@@ -105,9 +105,15 @@ const styles = StyleSheet.create({
     margin: 16, marginBottom: 8, backgroundColor: '#fff', borderRadius: 12, borderWidth: 1,
     borderColor: Colors.divider, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14,
   },
-  chipsRow: { flexGrow: 0, marginBottom: 8 },
-  chip: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20, backgroundColor: '#fff', marginRight: 8, borderWidth: 1, borderColor: Colors.divider },
-  chipText: { fontSize: 12, color: Colors.textSecondary },
+  chipsRow: { flexGrow: 0, marginBottom: 8, paddingVertical: 2 },
+  chip: {
+    paddingHorizontal: 14, paddingVertical: 8, minHeight: 36, borderRadius: 20,
+    backgroundColor: '#fff', marginRight: 8, borderWidth: 1, borderColor: Colors.divider,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  // lineHeight is load-bearing: without it Android clips the bottom of the
+  // custom Inter glyphs inside a chip this short.
+  chipText: { fontSize: 12.5, lineHeight: 18, color: Colors.textSecondary, includeFontPadding: false },
   list: { padding: 12 },
   userCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 14, padding: 12, marginBottom: 8 },
   userName: { fontWeight: '600', color: Colors.textPrimary },

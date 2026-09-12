@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, StyleSheet, View } from 'react-native';
 import Text from '../../components/Text';
 import { Colors } from '../../constants/theme';
 import { BLOOD_TYPES } from '../../constants/appConstants';
@@ -9,6 +9,7 @@ import { createRequest } from '../../services/bloodRequestService';
 import AppTextField from '../../components/AppTextField';
 import SelectField from '../../components/SelectField';
 import PrimaryButton from '../../components/PrimaryButton';
+import KeyboardAwareScreen from '../../components/KeyboardAwareScreen';
 import type { HomeStackScreenProps } from '../../types/navigation';
 
 export default function RequestBloodScreen({ navigation }: HomeStackScreenProps<'RequestBlood'>) {
@@ -37,7 +38,7 @@ export default function RequestBloodScreen({ navigation }: HomeStackScreenProps<
 
     setLoading(true);
     try {
-      await createRequest({
+      const result = await createRequest({
         requesterUid: appUser.uid,
         requesterName: appUser.fullName,
         patientName: patientName.trim(),
@@ -47,7 +48,22 @@ export default function RequestBloodScreen({ navigation }: HomeStackScreenProps<
         location: location.trim(),
         contactNumber: contactNumber.trim(),
       });
-      Alert.alert('Request Posted', 'Matching donors will be notified.');
+      // Say what actually happened rather than always promising donors were
+      // alerted - in an emergency the requester needs to know when to go and
+      // chase people themselves.
+      let message: string;
+      if (result.notifyError) {
+        message =
+          'Your request is live and visible on the home screen, but donors could not be ' +
+          'alerted automatically. Please also share the details directly.';
+      } else if (!result.notified || result.notified.inAppCount === 0) {
+        message =
+          'No compatible donors are registered yet. Your request is live and visible to ' +
+          'everyone on the home screen.';
+      } else {
+        message = `${result.notified.inAppCount} compatible donor(s) have been notified.`;
+      }
+      Alert.alert('Request Posted', message);
       navigation.goBack();
     } catch (e) {
       Alert.alert('Failed', (e as Error).message || 'Failed to post request. Please try again.');
@@ -57,32 +73,28 @@ export default function RequestBloodScreen({ navigation }: HomeStackScreenProps<
   };
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: Colors.background }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.title}>Fill in the request details</Text>
-        <Text style={styles.subtitle}>Matching donors will be notified instantly via push + in-app notifications.</Text>
-        <View style={{ height: 20 }} />
+    <KeyboardAwareScreen contentContainerStyle={styles.container}>
+      <Text style={styles.title}>Fill in the request details</Text>
+      <View style={{ height: 20 }} />
 
-        <AppTextField label="Patient Name" value={patientName} onChangeText={setPatientName} error={errors.patientName} />
-        <View style={{ height: 14 }} />
-        <SelectField label="Blood Type Needed" value={bloodType} options={BLOOD_TYPES} onChange={setBloodType} error={errors.bloodType} />
-        <View style={{ height: 14 }} />
-        <AppTextField label="Units Required" value={units} onChangeText={setUnits} keyboardType="number-pad" error={errors.units} />
-        <View style={{ height: 14 }} />
-        <AppTextField label="Hospital Name / Location" value={hospitalName} onChangeText={setHospitalName} error={errors.hospitalName} />
-        <View style={{ height: 14 }} />
-        <AppTextField label="City / Area" value={location} onChangeText={setLocation} error={errors.location} />
-        <View style={{ height: 14 }} />
-        <AppTextField label="Contact Mobile Number" value={contactNumber} onChangeText={setContactNumber} keyboardType="phone-pad" error={errors.contactNumber} />
+      <AppTextField label="Patient Name" value={patientName} onChangeText={setPatientName} error={errors.patientName} />
+      <View style={{ height: 14 }} />
+      <SelectField label="Blood Type Needed" value={bloodType} options={BLOOD_TYPES} onChange={setBloodType} error={errors.bloodType} />
+      <View style={{ height: 14 }} />
+      <AppTextField label="Units Required" value={units} onChangeText={setUnits} keyboardType="number-pad" error={errors.units} />
+      <View style={{ height: 14 }} />
+      <AppTextField label="Hospital Name / Location" value={hospitalName} onChangeText={setHospitalName} error={errors.hospitalName} />
+      <View style={{ height: 14 }} />
+      <AppTextField label="City / Area" value={location} onChangeText={setLocation} error={errors.location} />
+      <View style={{ height: 14 }} />
+      <AppTextField label="Contact Mobile Number" value={contactNumber} onChangeText={setContactNumber} keyboardType="phone-pad" error={errors.contactNumber} />
 
-        <PrimaryButton label="Post Request" onPress={submit} loading={loading} style={{ marginTop: 24 }} />
-      </ScrollView>
-    </KeyboardAvoidingView>
+      <PrimaryButton label="Post Request" onPress={submit} loading={loading} style={{ marginTop: 24 }} />
+    </KeyboardAwareScreen>
   );
 }
 
 const styles = StyleSheet.create({
   container: { padding: 20, paddingBottom: 40 },
   title: { fontSize: 18, fontWeight: 'bold', color: Colors.primary },
-  subtitle: { color: Colors.textSecondary, fontSize: 13, marginTop: 4 },
 });
