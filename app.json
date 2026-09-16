@@ -29,7 +29,7 @@
       "permissions": [
         "NOTIFICATIONS"
       ],
-      "versionCode": 6,
+      "versionCode": 7,
       "softwareKeyboardLayoutMode": "resize"
     },
     "web": {
